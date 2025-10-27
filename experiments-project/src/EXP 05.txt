@@ -1,0 +1,61 @@
+#include <stdio.h>
+
+struct Item {
+    float value, weight;
+};
+
+void sortItems(struct Item items[], int n) {
+    for (int i = 0; i < n - 1; i++) {
+        for (int j = i + 1; j < n; j++) {
+            float r1 = items[i].value / items[i].weight;
+            float r2 = items[j].value / items[j].weight;
+            if (r1 < r2) {  // sort in descending order of value/weight
+                struct Item temp = items[i];
+                items[i] = items[j];
+                items[j] = temp;
+            }
+        }
+    }
+}
+
+int main() {
+    int n;
+    float capacity;
+
+    printf("Enter number of items: ");
+    scanf("%d", &n);
+
+    struct Item items[n];
+    for (int i = 0; i < n; i++) {
+        printf("Enter value and weight of item %d: ", i + 1);
+        scanf("%f %f", &items[i].value, &items[i].weight);
+    }
+
+    printf("Enter knapsack capacity: ");
+    scanf("%f", &capacity);
+
+    sortItems(items, n);
+
+    float totalValue = 0.0;
+
+    for (int i = 0; i < n; i++) {
+        if (capacity >= items[i].weight) {
+            totalValue += items[i].value;
+            capacity -= items[i].weight;
+        } else {
+            totalValue += (items[i].value / items[i].weight) * capacity;
+            break;
+        }
+    }
+
+    printf("Maximum value in Knapsack = %.2f\n", totalValue);
+    return 0;
+}
+
+#Input
+Enter number of items: 3
+Enter value and weight of item 1: 60 10
+Enter value and weight of item 2: 100 20
+Enter value and weight of item 3: 120 30
+Enter knapsack capacity: 50
+Maximum value in Knapsack = 240.00

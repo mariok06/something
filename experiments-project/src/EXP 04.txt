@@ -1,0 +1,63 @@
+#include <stdio.h>
+
+// Function to merge two halves
+void merge(int arr[], int l, int mid, int h) {
+    int i = l, j = mid + 1, k = 0;
+    int temp[h - l + 1];
+
+    // Merge the two halves
+    while (i <= mid && j <= h) {
+        if (arr[i] < arr[j])
+            temp[k++] = arr[i++];
+        else
+            temp[k++] = arr[j++];
+    }
+
+    // Copy remaining elements
+    while (i <= mid)
+        temp[k++] = arr[i++];
+
+    while (j <= h)
+        temp[k++] = arr[j++];
+
+    // Copy sorted elements back into original array
+    for (i = l, k = 0; i <= h; i++, k++)
+        arr[i] = temp[k];
+}
+
+// Recursive Merge Sort function
+void mergeSort(int arr[], int l, int h) {
+    if (l < h) {
+        int mid = (l + h) / 2;
+
+        mergeSort(arr, l, mid);
+        mergeSort(arr, mid + 1, h);
+        merge(arr, l, mid, h);
+    }
+}
+
+int main() {
+    int n;
+
+    printf("Enter number of elements: ");
+    scanf("%d", &n);
+
+    int arr[n]; // Variable-length array (depends on user input)
+
+    printf("Enter %d elements:\n", n);
+    for (int i = 0; i < n; i++)
+        scanf("%d", &arr[i]);
+
+    printf("\nOriginal array: ");
+    for (int i = 0; i < n; i++)
+        printf("%d ", arr[i]);
+
+    mergeSort(arr, 0, n - 1);
+
+    printf("\nSorted array: ");
+    for (int i = 0; i < n; i++)
+        printf("%d ", arr[i]);
+
+    printf("\n");
+    return 0;
+}
