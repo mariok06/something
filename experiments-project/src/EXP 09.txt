@@ -1,39 +1,116 @@
-#include <stdio.h>
+# Cache Mapping Methods Implementation
 
-int n, target, arr[20], subset[20];
+class CacheMapping:
+    def __init__(self, cache_size, block_size, num_sets=None):
+        self.cache_size = cache_size
+        self.block_size = block_size
+        self.num_blocks = cache_size // block_size
+        self.num_sets = num_sets
+        self.cache = []
 
-void sumOfSubsets(int i, int sum) {
-    if (sum == target) {
-        printf("Subset: ");
-        for (int j = 0; j < i; j++)
-            if (subset[j]) printf("%d ", arr[j]);
-        printf("\n");
-        return;
-    }
-    if (i == n || sum > target) return;
+    # ---------- 1. Direct Mapping ----------
+    def direct_mapping(self, memory_blocks):
+        self.cache = [-1] * self.num_blocks
+        hits, misses = 0, 0
 
-    subset[i] = 1; // include arr[i]
-    sumOfSubsets(i + 1, sum + arr[i]);
+        print("\n--- Direct Mapping ---")
+        for block in memory_blocks:
+            line = block % self.num_blocks
+            if self.cache[line] == block:
+                hits += 1
+                print(f"Block {block} → Cache line {line}: HIT")
+            else:
+                misses += 1
+                print(f"Block {block} → Cache line {line}: MISS (Replacing {self.cache[line]})")
+                self.cache[line] = block
 
-    subset[i] = 0; // exclude arr[i]
-    sumOfSubsets(i + 1, sum);
-}
+        print(f"\nTotal Hits: {hits}, Misses: {misses}")
+        print("Final Cache State:", self.cache)
 
-int main() {
-    printf("Enter number of elements: ");
-    scanf("%d", &n);
-    printf("Enter elements: ");
-    for (int i = 0; i < n; i++)
-        scanf("%d", &arr[i]);
-    printf("Enter target sum: ");
-    scanf("%d", &target);
+    # ---------- 2. Fully Associative Mapping ----------
+    def associative_mapping(self, memory_blocks):
+        self.cache = []
+        hits, misses = 0, 0
 
-    printf("\nSubsets with sum %d:\n", target);
-    sumOfSubsets(0, 0);
-    return 0;
-}
+        print("\n--- Associative Mapping ---")
+        for block in memory_blocks:
+            if block in self.cache:
+                hits += 1
+                print(f"Block {block}: HIT")
+            else:
+                misses += 1
+                if len(self.cache) < self.num_blocks:
+                    self.cache.append(block)
+                else:
+                    removed = self.cache.pop(0)  # FIFO replacement
+                    self.cache.append(block)
+                    print(f"Replacing Block {removed} with {block}")
+                print(f"Block {block}: MISS")
 
-#Input
-Enter number of elements: 4
-Enter elements: 1 2 3 4
-Enter target sum: 5
+        print(f"\nTotal Hits: {hits}, Misses: {misses}")
+        print("Final Cache State:", self.cache)
+
+    # ---------- 3. Set-Associative Mapping ----------
+    def set_associative_mapping(self, memory_blocks):
+        if not self.num_sets:
+            raise ValueError("Number of sets must be specified for set-associative mapping.")
+
+        blocks_per_set = self.num_blocks // self.num_sets
+        self.cache = [[] for _ in range(self.num_sets)]
+        hits, misses = 0, 0
+
+        print(f"\n--- Set-Associative Mapping ({self.num_sets} sets, {blocks_per_set} blocks per set) ---")
+        for block in memory_blocks:
+            set_index = block % self.num_sets
+            if block in self.cache[set_index]:
+                hits += 1
+                print(f"Block {block} in Set {set_index}: HIT")
+            else:
+                misses += 1
+                if len(self.cache[set_index]) < blocks_per_set:
+                    self.cache[set_index].append(block)
+                else:
+                    removed = self.cache[set_index].pop(0)  # FIFO replacement
+                    self.cache[set_index].append(block)
+                    print(f"Set {set_index}: Replaced {removed} with {block}")
+                print(f"Block {block} in Set {set_index}: MISS")
+
+        print(f"\nTotal Hits: {hits}, Misses: {misses}")
+        print("Final Cache State:", self.cache)
+
+
+# ---------- Example Input ----------
+if __name__ == "__main__":
+    cache_size = int(input("Enter cache size (in blocks): "))
+    block_size = int(input("Enter block size: "))
+    memory_blocks = list(map(int, input("Enter memory block sequence (space-separated): ").split()))
+
+    obj = CacheMapping(cache_size, block_size)
+
+    # Direct Mapping
+    obj.direct_mapping(memory_blocks)
+
+    # Associative Mapping
+    obj.associative_mapping(memory_blocks)
+
+    # Set-Associative Mapping
+    num_sets = int(input("\nEnter number of sets for Set-Associative Mapping: "))
+    obj.num_sets = num_sets
+    obj.set_associative_mapping(memory_blocks)
+
+
+#Direct mapping input
+Enter cache size (in blocks): 8
+Enter block size: 1
+Enter memory block sequence: 0 8 0 6 8 1 2 3 8
+
+#Fully associative mapping
+Enter cache size (in blocks): 4
+Enter block size: 1
+Enter memory block sequence: 0 1 2 3 0 4 1 0 5
+
+#Set associative mapping
+Enter cache size (in blocks): 8
+Enter block size: 1
+Enter memory block sequence: 0 8 0 6 8 1 2 3 8
+Enter number of sets for Set-Associative Mapping: 4

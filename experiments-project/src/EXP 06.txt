@@ -1,51 +1,72 @@
-#include <stdio.h>
+def binary_to_decimal(b):
+    """Convert binary string to decimal integer."""
+    return int(b, 2) if b[0] == '0' else -int(b[1:], 2)
 
-int find(int parent[], int i) {
-    while (parent[i] != i) i = parent[i];
-    return i;
-}
+def decimal_to_binary(num, bits):
+    """Convert decimal integer to binary string of fixed length."""
+    if num >= 0:
+        b = bin(num)[2:]
+        return b.zfill(bits)
+    else:
+        # Two's complement for negative numbers
+        b = bin((1 << bits) + num)[2:]
+        return b[-bits:]
 
-void uni(int parent[], int a, int b) {
-    parent[find(parent, a)] = find(parent, b);
-}
+def non_restoring_division(dividend, divisor, bits):
+    """
+    Perform Non-Restoring Division on binary numbers.
+    dividend, divisor : binary strings
+    bits              : number of bits for quotient and remainder
+    """
 
-int main() {
-    int n, e;
-    printf("Enter vertices and edges: ");
-    scanf("%d%d", &n, &e);
+    # Convert to decimal
+    A = 0
+    M = int(divisor, 2)
+    Q = int(dividend, 2)
 
-    int u[e], v[e], w[e], parent[n];
-    printf("Enter edges (u v w):\n");
-    for (int i = 0; i < e; i++) scanf("%d%d%d", &u[i], &v[i], &w[i]);
-    for (int i = 0; i < n; i++) parent[i] = i;
+    print(f"Initial Values:")
+    print(f"A = {A:0{bits}b}, M = {M:0{bits}b}, Q = {Q:0{bits}b}\n")
 
-    // Sort edges by weight
-    for (int i = 0; i < e - 1; i++)
-        for (int j = 0; j < e - i - 1; j++)
-            if (w[j] > w[j + 1]) {
-                int t = w[j]; w[j] = w[j + 1]; w[j + 1] = t;
-                t = u[j]; u[j] = u[j + 1]; u[j + 1] = t;
-                t = v[j]; v[j] = v[j + 1]; v[j + 1] = t;
-            }
+    for step in range(bits):
+        # Left shift A and Q
+        A = (A << 1) | ((Q >> (bits - 1)) & 1)
+        A &= (1 << bits) - 1  # limit to bits
+        Q = (Q << 1) & ((1 << bits) - 1)
 
-    int cost = 0;
-    printf("\nEdges in MST:\n");
-    for (int i = 0; i < e; i++)
-        if (find(parent, u[i]) != find(parent, v[i])) {
-            printf("%d - %d : %d\n", u[i], v[i], w[i]);
-            cost += w[i];
-            uni(parent, u[i], v[i]);
-        }
+        # Subtract M
+        A = A - M
 
-    printf("Minimum Cost = %d\n", cost);
-    return 0;
-}
+        print(f"Step {step + 1}: After shift and subtract M:")
+        print(f"A = {A:0{bits}b}, Q = {Q:0{bits}b}")
 
-#Input
-Enter vertices and edges: 4 5
-Enter edges (u v w):
-0 1 10
-0 2 6
-0 3 5
-1 3 15
-2 3 4
+        if A < 0:
+            # Restore and set Q0 = 0
+            A = A + M
+            Q = Q & ~1  # Set LSB to 0
+            print(f"A negative → Restored A = {A:0{bits}b}, Q0 = 0")
+        else:
+            # Set Q0 = 1
+            Q = Q | 1
+            print(f"A positive → Keep A = {A:0{bits}b}, Q0 = 1")
+
+        print()
+
+    remainder = A
+    quotient = Q
+
+    print(f"Final Quotient (Q)  = {quotient:0{bits}b}")
+    print(f"Final Remainder (A) = {remainder:0{bits}b}")
+
+    return quotient, remainder
+
+
+# Example usage
+dividend = "1100"   # 12 in decimal
+divisor = "0011"    # 3 in decimal
+bits = 4
+
+q, r = non_restoring_division(dividend, divisor, bits)
+
+print("\nResult:")
+print(f"Quotient  = {q:0{bits}b} ({q})")
+print(f"Remainder = {r:0{bits}b} ({r})")
